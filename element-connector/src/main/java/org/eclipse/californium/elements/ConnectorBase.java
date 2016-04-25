@@ -19,9 +19,12 @@ package org.eclipse.californium.elements;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.eclipse.californium.elements.utils.VoidFuture;
 
 /**
  * ConnectorBase is a partial implementation of a {@link Connector}. It connects
@@ -144,8 +147,8 @@ public abstract class ConnectorBase implements Connector {
 	 * @see ch.inf.vs.californium.network.connector.Connector#start()
 	 */
 	@Override
-	public synchronized void start() throws IOException {
-		if (running) return;
+	public synchronized Future<?> start() throws IOException {
+		if (running) return new VoidFuture();
 		running = true;
 
 		int senderCount = getSenderThreadCount();
@@ -162,15 +165,17 @@ public abstract class ConnectorBase implements Connector {
 		
 		receiverThread.start();
 		senderThread.start();
+		return new VoidFuture();
 	}
 
 	@Override
-	public synchronized void stop() {
-		if (!running) return;
+	public synchronized Future<?> stop() {
+		if (!running) return new VoidFuture();
 		running = false;
 		senderThread.interrupt();
 		receiverThread.interrupt();
 		outgoing.clear();
+		return new VoidFuture();
 	}
 
 	/**
@@ -179,13 +184,14 @@ public abstract class ConnectorBase implements Connector {
 	 * call stop() but the subclass has to do that if required.
 	 */
 	@Override
-	public synchronized void destroy() { }
+	public synchronized void destroy() {}
 
 	@Override
-	public void send(RawData msg) {
+	public Future<?> send(RawData msg) {
 		if (msg == null)
 			throw new NullPointerException();
 		outgoing.add(msg);
+		return new VoidFuture();
 	}
 
 	@Override

@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -68,6 +69,7 @@ import org.eclipse.californium.elements.CorrelationContext;
 import org.eclipse.californium.elements.DtlsCorrelationContext;
 import org.eclipse.californium.elements.RawData;
 import org.eclipse.californium.elements.RawDataChannel;
+import org.eclipse.californium.elements.utils.VoidFuture;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig.Builder;
 import org.eclipse.californium.scandium.dtls.AlertMessage;
@@ -277,8 +279,9 @@ public class DTLSConnector implements Connector {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public final synchronized void start() throws IOException {
+	public final synchronized Future<?> start() throws IOException {
 		start(config.getAddress());
+		return new VoidFuture();
 	}
 
 	/**
@@ -394,13 +397,14 @@ public class DTLSConnector implements Connector {
 	}
 
 	@Override
-	public final synchronized void stop() {
+	public final synchronized Future<?> stop() {
 		if (!running) {
-			return;
+			return new VoidFuture();
 		}
 		LOGGER.log(Level.INFO, "Stopping DTLS connector on [{0}]", lastBindAddress);
 		timer.shutdownNow();
 		releaseSocket();
+		return new VoidFuture();
 	}
 
 	/**
@@ -1118,7 +1122,7 @@ public class DTLSConnector implements Connector {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public final void send(RawData msg) {
+	public final Future<?> send(RawData msg) {
 		if (msg == null) {
 			throw new NullPointerException("Message must not be null");
 		} else if (msg.getBytes().length > MAX_PLAINTEXT_FRAGMENT_LENGTH) {
@@ -1131,6 +1135,7 @@ public class DTLSConnector implements Connector {
 						msg.getInetSocketAddress());
 			}
 		}
+		return new VoidFuture();
 	}
 
 	private void sendNextMessageOverNetwork() throws HandshakeException {

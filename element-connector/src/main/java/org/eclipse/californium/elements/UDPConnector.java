@@ -24,9 +24,12 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.eclipse.californium.elements.utils.VoidFuture;
 
 /**
  * A {@link Connector} employing UDP as the transport protocol for exchanging
@@ -106,8 +109,8 @@ public class UDPConnector implements Connector {
 	}
 	
 	@Override
-	public synchronized void start() throws IOException {
-		if (running) return;
+	public synchronized Future<?> start() throws IOException {
+		if (running) return new VoidFuture();
 		
 		// if localAddr is null or port is 0, the system decides
 		socket = new DatagramSocket(localAddr.getPort(), localAddr.getAddress());
@@ -155,11 +158,12 @@ public class UDPConnector implements Connector {
 			.append(receiveBufferSize).append(", send buf = ").append(sendBufferSize)
 			.append(", recv packet size = ").append(receiverPacketSize).toString();
 		LOGGER.log(Level.CONFIG, startupMsg);
+		return new VoidFuture();
 	}
 
 	@Override
-	public synchronized void stop() {
-		if (!running) return;
+	public synchronized Future<?> stop() {
+		if (!running) return new VoidFuture() ;
 		this.running = false;
 		// stop all threads
 		if (senderThreads!= null)
@@ -176,6 +180,7 @@ public class UDPConnector implements Connector {
 			socket.close();
 		socket = null;
 		LOGGER.log(Level.CONFIG, "UDPConnector on [{0}] has stopped.", address);
+		return new VoidFuture();
 	}
 
 	@Override
@@ -184,12 +189,13 @@ public class UDPConnector implements Connector {
 	}
 
 	@Override
-	public void send(RawData msg) {
+	public Future<?> send(RawData msg) {
 		if (msg == null) {
 			throw new NullPointerException("Message must not be null");
 		} else {
 			outgoing.add(msg);
 		}
+		return new VoidFuture();
 	}
 
 	@Override

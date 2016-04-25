@@ -27,6 +27,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.californium.category.Small;
@@ -43,6 +44,7 @@ import org.eclipse.californium.elements.CorrelationContext;
 import org.eclipse.californium.elements.MapBasedCorrelationContext;
 import org.eclipse.californium.elements.RawData;
 import org.eclipse.californium.elements.RawDataChannel;
+import org.eclipse.californium.elements.utils.VoidFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -143,11 +145,13 @@ public class CoapEndpointTest {
 		}
 
 		@Override
-		public void start() throws IOException {
+		public Future<?> start() throws IOException {
+			return new VoidFuture();
 		}
 
 		@Override
-		public void stop() {
+		public Future<?> stop() {
+			return new VoidFuture();
 		}
 
 		@Override
@@ -155,11 +159,12 @@ public class CoapEndpointTest {
 		}
 
 		@Override
-		public void send(RawData msg) {
+		public Future<?> send(RawData msg) {
 			if (msg.getMessageCallback() != null) {
 				msg.getMessageCallback().onContextEstablished(context);
 				latch.countDown();
 			}
+			return new VoidFuture();
 		}
 
 		@Override
